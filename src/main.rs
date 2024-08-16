@@ -29,7 +29,10 @@ fn main() {
     println!("Hello, world!");
     let cli = App::parse();
     let result = match &cli.command {
-        Command::Read { dbname } => cmdprint(dbname),
+        Command::Read { dbname } => {
+            let slug = "The db is: ".to_owned() + dbname;
+            cmdprint(&slug)
+        }
     };
 
     match result {
