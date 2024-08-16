@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+use anyhow::Result;
 use std::process;
 
 use clap::{ArgAction, Parser, Subcommand};
@@ -20,7 +21,7 @@ enum Command {
     },
 }
 
-fn cmdprint(slug: &str) -> anyhow::Result<()> {
+fn cmdprint(slug: &str) -> Result<()> {
     println!("{}", slug);
     Ok(())
 }
