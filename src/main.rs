@@ -16,7 +16,8 @@ pub struct App {
 enum Command {
     /// Read from database
     Read {
-        #[clap(long)]
+        #[clap(short, long)]
+        /// Name of database to read from
         dbname: String,
     },
 }
