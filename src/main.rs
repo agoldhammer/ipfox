@@ -27,11 +27,17 @@ fn cmdprint(slug: &str) -> Result<()> {
     Ok(())
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     println!("Hello, world!");
     let cli = App::parse();
     let result = match &cli.command {
         Command::Read { dbname } => {
+            let collection = ipfox::setup_db().await.unwrap();
+            println!(
+                "Connection has been made to collection: {}",
+                collection.name()
+            );
             let slug = "The db is: ".to_owned() + dbname;
             cmdprint(&slug)
         }
