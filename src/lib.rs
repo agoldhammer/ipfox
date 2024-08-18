@@ -1,5 +1,6 @@
 use anyhow::Result;
 use console::style;
+use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::options::IndexOptions;
 use mongodb::{Client, Collection, IndexModel};
@@ -32,9 +33,9 @@ impl fmt::Display for HostData {
     }
 }
 
-pub async fn setup_db() -> Result<Collection<HostData>> {
+async fn setup_db(dbname: &str) -> Result<Collection<HostData>> {
     let client = Client::with_uri_str("mongodb://192.168.0.128:27017").await?;
-    let db = client.database("test_loglook");
+    let db = client.database(dbname);
     let collection = db.collection("hostdata");
     let options = IndexOptions::builder().unique(true).build();
     let model = IndexModel::builder()
@@ -43,4 +44,16 @@ pub async fn setup_db() -> Result<Collection<HostData>> {
         .build();
     collection.create_index(model).await?;
     Ok(collection)
+}
+
+pub async fn get_ips_in_hostdata(dbname: &str) -> Result<()> {
+    let hostdata_coll = setup_db(dbname).await?;
+    let filter = doc! { "ip": { "$ne": "" } };
+    let mut cursor = hostdata_coll.find(filter).await?;
+    while let Some(doc) = cursor.try_next().await? {
+        println!("{:?}", doc);
+    }
+    let count = hostdata_coll.estimated_document_count().await?;
+    println!("count: {}", count);
+    Ok(())
 }

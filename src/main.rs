@@ -33,11 +33,11 @@ async fn main() {
     let cli = App::parse();
     let result = match &cli.command {
         Command::Read { dbname } => {
-            let collection = ipfox::setup_db().await.unwrap();
-            println!(
-                "Connection has been made to collection: {}",
-                collection.name()
-            );
+            ipfox::get_ips_in_hostdata(dbname).await.unwrap();
+            // println!(
+            //     "Connection has been made to collection: {}",
+            //     collection.name()
+            // );
             let slug = "The db is: ".to_owned() + dbname;
             cmdprint(&slug)
         }
