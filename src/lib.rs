@@ -48,8 +48,8 @@ async fn setup_db(dbname: &str) -> Result<Collection<HostData>> {
 
 pub async fn get_ips_in_hostdata(dbname: &str) -> Result<()> {
     let hostdata_coll = setup_db(dbname).await?;
-    let filter = doc! { "ip": { "$ne": "" } };
-    let mut cursor = hostdata_coll.find(filter).await?;
+    let alldocs = doc! {};
+    let mut cursor = hostdata_coll.find(alldocs).await?;
     while let Some(doc) = cursor.try_next().await? {
         println!("{:?}", doc);
     }
