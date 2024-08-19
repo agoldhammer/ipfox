@@ -3,12 +3,15 @@ use console::style;
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::options::IndexOptions;
-use mongodb::{Client, Collection, IndexModel};
+use mongodb::{Client, Collection, Database, IndexModel};
 // use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
 pub mod geo;
+pub mod logentries;
+
+use logentries::LogEntry;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HostData {
@@ -33,9 +36,14 @@ impl fmt::Display for HostData {
     }
 }
 
-async fn setup_db(dbname: &str) -> Result<Collection<HostData>> {
+async fn get_db(dbname: &str) -> Result<Database> {
     let client = Client::with_uri_str("mongodb://192.168.0.128:27017").await?;
     let db = client.database(dbname);
+    Ok(db)
+}
+
+async fn get_hostdata_coll(dbname: &str) -> Result<Collection<HostData>> {
+    let db = get_db(dbname).await?;
     let collection = db.collection("hostdata");
     let options = IndexOptions::builder().unique(true).build();
     let model = IndexModel::builder()
@@ -46,8 +54,16 @@ async fn setup_db(dbname: &str) -> Result<Collection<HostData>> {
     Ok(collection)
 }
 
+async fn get_logentries_coll(dbname: &str) -> Result<Collection<LogEntry>> {
+    let db = get_db(dbname).await?;
+    let collection = db.collection("logentries");
+    let model = IndexModel::builder().keys(doc! {"ip": 1}).build();
+    collection.create_index(model).await?;
+    Ok(collection)
+}
+
 pub async fn get_ips_in_hostdata(dbname: &str) -> Result<()> {
-    let hostdata_coll = setup_db(dbname).await?;
+    let hostdata_coll = get_hostdata_coll(dbname).await?;
     let alldocs = doc! {};
     let cursor = hostdata_coll.find(alldocs).await?;
     let hds: Vec<HostData> = cursor.try_collect().await?;
@@ -58,6 +74,20 @@ pub async fn get_ips_in_hostdata(dbname: &str) -> Result<()> {
     //     println!("{:?}", doc);
     // }
     let count = hostdata_coll.estimated_document_count().await?;
+    println!("count: {}", count);
+    Ok(())
+}
+
+pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
+    dbg!(ip);
+    let logentries_coll = get_logentries_coll(dbname).await?;
+    let filter = doc! {"ip": ip};
+    let cursor = logentries_coll.find(filter).await?;
+    let les: Vec<LogEntry> = cursor.try_collect().await?;
+    for le in les {
+        println!("{}", le);
+    }
+    let count = logentries_coll.estimated_document_count().await?;
     println!("count: {}", count);
     Ok(())
 }

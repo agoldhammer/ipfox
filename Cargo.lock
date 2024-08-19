@@ -715,6 +715,7 @@ name = "ipfox"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bson",
  "clap",
  "console",
  "futures",
