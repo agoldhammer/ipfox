@@ -79,15 +79,21 @@ pub async fn get_ips_in_hostdata(dbname: &str) -> Result<()> {
 }
 
 pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
-    dbg!(ip);
     let logentries_coll = get_logentries_coll(dbname).await?;
     let filter = doc! {"ip": ip};
     let cursor = logentries_coll.find(filter).await?;
     let les: Vec<LogEntry> = cursor.try_collect().await?;
+    println!(
+        "Showing {} logentries for db {} and ip {}",
+        les.len(),
+        dbname,
+        ip
+    );
+    println!("-----------------");
     for le in les {
         println!("{}", le);
     }
     let count = logentries_coll.estimated_document_count().await?;
-    println!("count: {}", count);
+    println!("Total logentries in this db: {}", count);
     Ok(())
 }

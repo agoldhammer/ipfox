@@ -17,7 +17,7 @@ pub struct LogEntry {
 
 impl fmt::Display for LogEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // write!(f, "  ip: {}\n", self.ip)?;
+        write!(f, "  ip: {}\n", self.ip)?;
         writeln!(f, "  time: {}", self.time)?;
         writeln!(f, "  method: {}", self.method)?;
         writeln!(f, "  code: {}", self.code)?;
