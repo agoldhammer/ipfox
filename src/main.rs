@@ -29,6 +29,12 @@ enum Command {
         #[clap(short, long)]
         ip: String,
     },
+    /// Output logentries for each ip in hostdata
+    All {
+        #[clap(short, long, default_value = "test_loglook")]
+        /// Name of database to read from
+        dbname: String,
+    },
 }
 
 fn cmdprint(slug: &str) -> Result<()> {
@@ -36,19 +42,23 @@ fn cmdprint(slug: &str) -> Result<()> {
     Ok(())
 }
 
-#[tokio::main]
+#[tokio::main(worker_threads = 8)]
 async fn main() {
     println!("Hello, world!");
     let cli = App::parse();
     let result = match &cli.command {
         Command::Ips { dbname } => {
-            ipfox::get_ips_in_hostdata(dbname).await.unwrap();
+            ipfox::list_ips_in_hostdata(dbname).await.unwrap();
             let slug = "The db is: ".to_owned() + dbname;
             cmdprint(&slug)
         }
         Command::Logs { dbname, ip } => {
             // print logentries for given ip
             ipfox::get_les_for_ip(dbname, ip).await.unwrap();
+            Ok(())
+        }
+        Command::All { dbname } => {
+            ipfox::output_hostdata_by_ip(dbname).await.unwrap();
             Ok(())
         }
     };
