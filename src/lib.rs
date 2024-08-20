@@ -7,7 +7,7 @@ use mongodb::{Client, Collection, Database, IndexModel};
 pub mod geo;
 
 pub(crate) mod hostdata;
-pub mod logentries;
+pub(crate) mod logentries;
 
 use hostdata::HostData;
 use logentries::LogEntry;
