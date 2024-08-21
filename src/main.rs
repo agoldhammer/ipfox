@@ -35,6 +35,11 @@ enum Command {
         /// Name of database to read from
         dbname: String,
     },
+    Counts {
+        #[clap(short, long, default_value = "test_loglook")]
+        /// Name of database to read from
+        dbname: String,
+    },
 }
 
 fn cmdprint(slug: &str) -> Result<()> {
@@ -67,6 +72,10 @@ async fn main() {
         }
         Command::All { dbname } => {
             ipfox::output_hostdata_by_ip(dbname).await.unwrap();
+            Ok(())
+        }
+        Command::Counts { dbname } => {
+            ipfox::get_counts_by_ip(dbname).await.unwrap();
             Ok(())
         }
     };

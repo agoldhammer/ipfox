@@ -25,3 +25,11 @@ impl fmt::Display for HostData {
         })
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Count {
+    #[serde(rename = "_id")]
+    pub ip: String,
+    #[serde(rename = "nles")]
+    pub count: u32,
+}

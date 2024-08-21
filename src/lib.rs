@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
-use futures::stream::TryStreamExt;
+use futures::stream::{StreamExt, TryStreamExt};
 use mongodb::bson::doc;
 use mongodb::options::IndexOptions;
 use mongodb::{Client, Collection, Database, IndexModel};
@@ -10,7 +10,7 @@ pub mod geo;
 pub(crate) mod hostdata;
 pub(crate) mod logentries;
 
-use hostdata::HostData;
+use hostdata::{Count, HostData};
 use logentries::LogEntry;
 
 /// Get database from dbname, return error if db doesn't exist
@@ -109,21 +109,23 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
     Ok(())
 }
 
-// aggregation needed
-// [
-//     doc! {
-//         "$group": doc! {
-//             "_id": "$ip",
-//             "nles": doc! {
-//                 "$sum": 1
-//             }
-//         }
-//     }
-// ]
-
-// let grouper = doc! {"$group": {"_id": "$ip"}};
-//     let sorter = doc! {"$sort": {"_id": 1}};
-//     let pipeline = vec![time_filter, grouper, sorter];
-//     coll.aggregate(pipeline, None)
-//         .await
-//         .map_err(anyhow::Error::msg)
+pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
+    let db = get_db(dbname).await?;
+    let logentries_coll = get_logentries_coll(&db).await?;
+    let grouper = doc! {
+        "$group": doc! {
+            "_id": "$ip",
+            "nles": doc! {
+                "$sum": 1
+            }
+        }
+    };
+    let sorter = doc! {"$sort": doc! {"nles": -1}};
+    let pipeline = vec![grouper, sorter];
+    let mut cur = logentries_coll.aggregate(pipeline).await?;
+    while let Some(doc) = cur.next().await {
+        let count: Count = bson::from_document(doc?)?;
+        println!("{}: {}", count.ip, count.count);
+    }
+    Ok(())
+}
