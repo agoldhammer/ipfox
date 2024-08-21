@@ -48,9 +48,17 @@ async fn main() {
     let cli = App::parse();
     let result = match &cli.command {
         Command::Ips { dbname } => {
-            ipfox::list_ips_in_hostdata(dbname).await.unwrap();
-            let slug = "The db is: ".to_owned() + dbname;
-            cmdprint(&slug)
+            let res = ipfox::list_ips_in_hostdata(dbname).await;
+            match res {
+                Ok(()) => {
+                    let slug = "The db is: ".to_owned() + dbname;
+                    cmdprint(&slug)
+                }
+                Err(e) => {
+                    eprintln!("Application error: {}", e);
+                    process::exit(1);
+                }
+            }
         }
         Command::Logs { dbname, ip } => {
             // print logentries for given ip

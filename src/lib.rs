@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use anyhow::Result;
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
@@ -13,9 +14,19 @@ use hostdata::HostData;
 use logentries::LogEntry;
 
 async fn get_db(dbname: &str) -> Result<Database> {
+    // throw error if db doesn't exist
     let client = Client::with_uri_str("mongodb://192.168.0.128:27017").await?;
-    let db = client.database(dbname);
-    Ok(db)
+    let mut dbnames = client.list_database_names().await?;
+    dbnames.sort();
+    println!("dbnames: {:?}", dbnames);
+    let has_db = &dbnames.binary_search(&dbname.to_owned());
+    match has_db {
+        Ok(_) => {
+            let db = client.database(dbname);
+            Ok(db)
+        }
+        Err(_) => Err(anyhow!("Database '{}' not found", dbname)),
+    }
 }
 
 async fn get_hostdata_coll(dbname: &str) -> Result<Collection<HostData>> {
@@ -103,3 +114,22 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
     // println!("Total logentries in this db: {}", count);
     Ok(())
 }
+
+// aggregation needed
+// [
+//     doc! {
+//         "$group": doc! {
+//             "_id": "$ip",
+//             "nles": doc! {
+//                 "$sum": 1
+//             }
+//         }
+//     }
+// ]
+
+// let grouper = doc! {"$group": {"_id": "$ip"}};
+//     let sorter = doc! {"$sort": {"_id": 1}};
+//     let pipeline = vec![time_filter, grouper, sorter];
+//     coll.aggregate(pipeline, None)
+//         .await
+//         .map_err(anyhow::Error::msg)
