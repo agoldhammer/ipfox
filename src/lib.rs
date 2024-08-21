@@ -15,23 +15,24 @@ use logentries::LogEntry;
 
 /// Get database from dbname, return error if db doesn't exist
 async fn get_db(dbname: &str) -> Result<Database> {
-    // throw error if db doesn't exist
     let client = Client::with_uri_str("mongodb://192.168.0.128:27017").await?;
     let mut dbnames = client.list_database_names().await?;
     dbnames.sort();
-    println!("dbnames: {:?}", dbnames);
+    // check to see if desired db is in the list of names
     let has_db = &dbnames.binary_search(&dbname.to_owned());
     match has_db {
         Ok(_) => {
             let db = client.database(dbname);
             Ok(db)
         }
+        // bail if db doesn't exist
         Err(_) => Err(anyhow!("Database '{}' not found", dbname)),
     }
 }
 
-async fn get_hostdata_coll(dbname: &str) -> Result<Collection<HostData>> {
-    let db = get_db(dbname).await?;
+/// get hostdata collection
+async fn get_hostdata_coll(db: &Database) -> Result<Collection<HostData>> {
+    // let db = get_db(dbname).await?;
     let collection = db.collection("hostdata");
     let options = IndexOptions::builder().unique(true).build();
     let model = IndexModel::builder()
@@ -42,16 +43,18 @@ async fn get_hostdata_coll(dbname: &str) -> Result<Collection<HostData>> {
     Ok(collection)
 }
 
-async fn get_logentries_coll(dbname: &str) -> Result<Collection<LogEntry>> {
-    let db = get_db(dbname).await?;
+/// get logentries collection
+async fn get_logentries_coll(db: &Database) -> Result<Collection<LogEntry>> {
     let collection = db.collection("logentries");
     let model = IndexModel::builder().keys(doc! {"ip": 1}).build();
     collection.create_index(model).await?;
     Ok(collection)
 }
 
+/// get sorted list of ips in hostdata
 async fn get_ips_in_hostdata(dbname: &str) -> Result<Vec<String>> {
-    let hostdata_coll = get_hostdata_coll(dbname).await?;
+    let db = get_db(dbname).await?;
+    let hostdata_coll = get_hostdata_coll(&db).await?;
     let alldocs = doc! {};
     let cursor = hostdata_coll.find(alldocs).await?;
     let hds: Vec<HostData> = cursor.try_collect().await?;
@@ -60,21 +63,15 @@ async fn get_ips_in_hostdata(dbname: &str) -> Result<Vec<String>> {
     Ok(ips)
 }
 
+/// output flat list of all ips in hostdata
 pub async fn list_ips_in_hostdata(dbname: &str) -> Result<()> {
     let ips = get_ips_in_hostdata(dbname).await?;
     println!("ips: {:?}", ips);
     println!("ips found: {}", ips.len());
-    // for hd in hds {
-    //     println!("{}", hd);
-    // }
-    // while let Some(doc) = cursor.try_next().await? {
-    //     println!("{:?}", doc);
-    // }
-    // let count = hostdata_coll.estimated_document_count().await?;
-    // println!("count: {}", count);
     Ok(())
 }
 
+/// output all hostdata, grouped by ip
 pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
     let ips = get_ips_in_hostdata(dbname).await?;
     let db = get_db(dbname).await?;
@@ -90,14 +87,10 @@ pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
     Ok(())
 }
 
-// async fn get_cursor_of_les(coll: Collection<LogEntry>, ip: &str) -> Result<Cursor<LogEntry>> {
-//     let filter = doc! {"ip": ip};
-//     let cursor = coll.find(filter).await?;
-//     Ok(cursor)
-// }
-
+/// get all logentries for given ip
 pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
-    let logentries_coll = get_logentries_coll(dbname).await?;
+    let db = get_db(dbname).await?;
+    let logentries_coll = get_logentries_coll(&db).await?;
     let filter = doc! {"ip": ip};
     let cursor = logentries_coll.find(filter).await?;
     let les: Vec<LogEntry> = cursor.try_collect().await?;
