@@ -13,6 +13,7 @@ pub(crate) mod logentries;
 use hostdata::HostData;
 use logentries::LogEntry;
 
+/// Get database from dbname, return error if db doesn't exist
 async fn get_db(dbname: &str) -> Result<Database> {
     // throw error if db doesn't exist
     let client = Client::with_uri_str("mongodb://192.168.0.128:27017").await?;
