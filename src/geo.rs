@@ -11,19 +11,6 @@ pub struct Geodata {
     pub organization: String,
 }
 
-// impl Geodata {
-//     fn new(ip: &str) -> Geodata {
-//         Geodata {
-//             ip: String::from(ip),
-//             country_name: "".to_string(),
-//             state_prov: "".to_string(),
-//             city: "".to_string(),
-//             isp: "".to_string(),
-//             organization: "".to_string(),
-//         }
-//     }
-// }
-
 impl fmt::Display for Geodata {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(
