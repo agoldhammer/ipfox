@@ -16,17 +16,14 @@ use logentries::LogEntry;
 /// Get database from dbname, return error if db doesn't exist
 async fn get_db(dbname: &str) -> Result<Database> {
     let client = Client::with_uri_str("mongodb://192.168.0.128:27017").await?;
-    let mut dbnames = client.list_database_names().await?;
-    dbnames.sort();
-    // check to see if desired db is in the list of names
-    let has_db = &dbnames.binary_search(&dbname.to_owned());
-    match has_db {
-        Ok(_) => {
-            let db = client.database(dbname);
-            Ok(db)
-        }
+    let dbnames = client.list_database_names().await?;
+    let has_db = dbnames.contains(&dbname.to_owned());
+    if has_db {
+        let db = client.database(dbname);
+        Ok(db)
+    } else {
         // bail if db doesn't exist
-        Err(_) => Err(anyhow!("Database '{}' not found", dbname)),
+        Err(anyhow!("Database '{}' not found", dbname))
     }
 }
 
@@ -88,7 +85,7 @@ pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
 }
 
 /// get all logentries for given ip
-pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
+pub async fn get_les_for_ip(dbname: &str, ip: &str, nologs: &bool) -> Result<()> {
     let db = get_db(dbname).await?;
     let hostdata_coll = get_hostdata_coll(&db).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
@@ -104,9 +101,12 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
     );
     println!("{}", hostdata);
     println!("-----------------");
-    for le in les {
-        println!("{}", le);
+    if !*nologs {
+        for le in les {
+            println!("{}", le);
+        }
     }
+
     // let count = logentries_coll.estimated_document_count().await?;
     // println!("Total logentries in this db: {}", count);
     Ok(())

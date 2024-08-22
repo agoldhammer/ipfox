@@ -14,13 +14,13 @@ pub struct App {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// List all hostdata from given database
+    /// List unique ips for database
     Ips {
         #[clap(short, long, default_value = "test_loglook")]
         /// Name of database to read from
         dbname: String,
     },
-    /// List logentries associated with given ip address
+    /// List hostdata and logentries associated with given ip address
     Logs {
         #[clap(short, long, default_value = "test_loglook")]
         /// Name of database to read from
@@ -28,6 +28,9 @@ enum Command {
         /// ip to look up
         #[clap(short, long)]
         ip: String,
+        /// suppress logentry output
+        #[clap(short, long, default_value = "false", action = ArgAction::SetTrue)]
+        nologs: bool,
     },
     /// Output logentries for each ip in hostdata
     All {
@@ -35,6 +38,7 @@ enum Command {
         /// Name of database to read from
         dbname: String,
     },
+    /// Output count of logentries for each ip in hostdata
     Counts {
         #[clap(short, long, default_value = "test_loglook")]
         /// Name of database to read from
@@ -42,42 +46,20 @@ enum Command {
     },
 }
 
-fn cmdprint(slug: &str) -> Result<()> {
-    println!("{}", slug);
-    Ok(())
-}
+// fn cmdprint(slug: &str) -> Result<()> {
+//     println!("{}", slug);
+//     Ok(())
+// }
 
 #[tokio::main(worker_threads = 8)]
 async fn main() {
-    println!("Hello, world!");
     let cli = App::parse();
+    // let mut cmd_result: Result<()>;
     let result = match &cli.command {
-        Command::Ips { dbname } => {
-            let res = ipfox::list_ips_in_hostdata(dbname).await;
-            match res {
-                Ok(()) => {
-                    let slug = "The db is: ".to_owned() + dbname;
-                    cmdprint(&slug)
-                }
-                Err(e) => {
-                    eprintln!("Application error: {}", e);
-                    process::exit(1);
-                }
-            }
-        }
-        Command::Logs { dbname, ip } => {
-            // print logentries for given ip
-            ipfox::get_les_for_ip(dbname, ip).await.unwrap();
-            Ok(())
-        }
-        Command::All { dbname } => {
-            ipfox::output_hostdata_by_ip(dbname).await.unwrap();
-            Ok(())
-        }
-        Command::Counts { dbname } => {
-            ipfox::get_counts_by_ip(dbname).await.unwrap();
-            Ok(())
-        }
+        Command::Ips { dbname } => ipfox::list_ips_in_hostdata(dbname).await,
+        Command::Logs { dbname, ip, nologs } => ipfox::get_les_for_ip(dbname, ip, nologs).await,
+        Command::All { dbname } => ipfox::output_hostdata_by_ip(dbname).await,
+        Command::Counts { dbname } => ipfox::get_counts_by_ip(dbname).await,
     };
 
     match result {
