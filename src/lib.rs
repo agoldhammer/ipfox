@@ -112,6 +112,7 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str, nologs: &bool) -> Result<()>
     Ok(())
 }
 
+/// get count of logentries for each ip
 pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
     let db = get_db(dbname).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
