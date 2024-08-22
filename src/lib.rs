@@ -90,8 +90,10 @@ pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
 /// get all logentries for given ip
 pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
     let db = get_db(dbname).await?;
+    let hostdata_coll = get_hostdata_coll(&db).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
     let filter = doc! {"ip": ip};
+    let hostdata = hostdata_coll.find_one(filter.clone()).await?.unwrap();
     let cursor = logentries_coll.find(filter).await?;
     let les: Vec<LogEntry> = cursor.try_collect().await?;
     println!(
@@ -100,6 +102,7 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str) -> Result<()> {
         dbname,
         ip
     );
+    println!("{}", hostdata);
     println!("-----------------");
     for le in les {
         println!("{}", le);
