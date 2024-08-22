@@ -44,6 +44,14 @@ enum Command {
         /// Name of database to read from
         dbname: String,
     },
+    /// Delete ips and associated logentries
+    Del {
+        #[clap(short, long, default_value = "test_loglook")]
+        /// Name of database to read from
+        dbname: String,
+        /// ips to delete
+        ips: Vec<String>,
+    },
 }
 
 // fn cmdprint(slug: &str) -> Result<()> {
@@ -60,6 +68,7 @@ async fn main() {
         Command::Logs { dbname, ip, nologs } => ipfox::get_les_for_ip(dbname, ip, nologs).await,
         Command::All { dbname } => ipfox::output_hostdata_by_ip(dbname).await,
         Command::Counts { dbname } => ipfox::get_counts_by_ip(dbname).await,
+        Command::Del { dbname, ips } => ipfox::delete_ips(dbname, ips).await,
     };
 
     match result {

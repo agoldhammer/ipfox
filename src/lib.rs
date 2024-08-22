@@ -133,3 +133,17 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
     }
     Ok(())
 }
+
+/// delete ips and associated logentries
+pub async fn delete_ips(dbname: &str, ips: &Vec<String>) -> Result<()> {
+    let db = get_db(dbname).await?;
+    let hostdata_coll = get_hostdata_coll(&db).await?;
+    let logentries_coll = get_logentries_coll(&db).await?;
+    println!("Deleting ips: {:?}", ips);
+    for ip in ips {
+        let filter = doc! {"ip": ip};
+        hostdata_coll.delete_one(filter.clone()).await?;
+        logentries_coll.delete_many(filter).await?;
+    }
+    Ok(())
+}
