@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 use anyhow::Result;
+use console;
 use std::process;
 
 use clap::{ArgAction, Parser, Subcommand};
@@ -61,6 +62,7 @@ enum Command {
 
 #[tokio::main(worker_threads = 8)]
 async fn main() {
+    console::set_colors_enabled(true);
     let cli = App::parse();
     // let mut cmd_result: Result<()>;
     let result = match &cli.command {
