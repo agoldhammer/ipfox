@@ -90,26 +90,26 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str, nologs: &bool) -> Result<()>
     let hostdata_coll = get_hostdata_coll(&db).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
     let filter = doc! {"ip": ip};
-    let hostdata = hostdata_coll.find_one(filter.clone()).await?.unwrap();
-    let cursor = logentries_coll.find(filter).await?;
-    let les: Vec<LogEntry> = cursor.try_collect().await?;
-    println!(
-        "Showing {} logentries for db {} and ip {}",
-        les.len(),
-        dbname,
-        ip
-    );
-    println!("{}", hostdata);
-    println!("-----------------");
-    if !*nologs {
-        for le in les {
-            println!("{}", le);
+    if let Some(hostdata) = hostdata_coll.find_one(filter.clone()).await? {
+        let cursor = logentries_coll.find(filter).await?;
+        let les: Vec<LogEntry> = cursor.try_collect().await?;
+        println!(
+            "Showing {} logentries for db {} and ip {}",
+            les.len(),
+            dbname,
+            ip
+        );
+        println!("{}", hostdata);
+        println!("-----------------");
+        if !*nologs {
+            for le in les {
+                println!("{}", le);
+            }
         }
+        Ok(())
+    } else {
+        Err(anyhow!("No hostdata found for ip {}", ip))
     }
-
-    // let count = logentries_coll.estimated_document_count().await?;
-    // println!("Total logentries in this db: {}", count);
-    Ok(())
 }
 
 /// get count of logentries for each ip
