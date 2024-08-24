@@ -28,3 +28,14 @@ impl fmt::Display for LogEntry {
         writeln!(f, "end")
     }
 }
+
+pub struct VecLogEntry(pub Vec<LogEntry>);
+
+impl fmt::Display for VecLogEntry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for le in &self.0 {
+            writeln!(f, "{}", le)?;
+        }
+        Ok(())
+    }
+}

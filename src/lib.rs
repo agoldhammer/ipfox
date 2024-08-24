@@ -95,16 +95,16 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str, nologs: &bool) -> Result<()>
         let les: Vec<LogEntry> = cursor.try_collect().await?;
         println!(
             "Showing {} logentries for db {} and ip {}",
-            les.len(),
+            &les.len(),
             dbname,
             ip
         );
+        let vles = logentries::VecLogEntry(les);
+
         println!("{}", hostdata);
         println!("-----------------");
         if !*nologs {
-            for le in les {
-                println!("{}", le);
-            }
+            println!("{}", vles);
         }
         Ok(())
     } else {
