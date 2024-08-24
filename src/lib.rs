@@ -11,7 +11,7 @@ pub(crate) mod hostdata;
 pub(crate) mod logentries;
 
 use hostdata::{Count, HostData};
-use logentries::LogEntry;
+use logentries::{LogEntry, VecLogEntry};
 
 /// Get database from dbname, return error if db doesn't exist
 async fn get_db(dbname: &str) -> Result<Database> {
@@ -99,7 +99,8 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str, nologs: &bool) -> Result<()>
             dbname,
             ip
         );
-        let vles = logentries::VecLogEntry(les);
+        let vles = VecLogEntry::from(les);
+        // let vles = logentries::VecLogEntry(les);
 
         println!("{}", hostdata);
         println!("-----------------");

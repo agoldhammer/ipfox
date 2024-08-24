@@ -31,6 +31,12 @@ impl fmt::Display for LogEntry {
 
 pub struct VecLogEntry(pub Vec<LogEntry>);
 
+impl From<Vec<LogEntry>> for VecLogEntry {
+    fn from(v: Vec<LogEntry>) -> Self {
+        VecLogEntry(v)
+    }
+}
+
 impl fmt::Display for VecLogEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for le in &self.0 {
