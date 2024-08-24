@@ -13,6 +13,19 @@ pub(crate) mod logentries;
 use hostdata::{Count, HostData};
 use logentries::LogEntry;
 
+trait DisplaySome {
+    fn display_some(&self, count: &usize) -> Result<()>;
+}
+
+impl DisplaySome for Vec<LogEntry> {
+    fn display_some(&self, count: &usize) -> Result<()> {
+        for le in self.iter().take(*count) {
+            println!("{}", le);
+        }
+        Ok(())
+    }
+}
+
 /// Get database from dbname, return error if db doesn't exist
 async fn get_db(dbname: &str) -> Result<Database> {
     let client = Client::with_uri_str("mongodb://192.168.0.128:27017").await?;
@@ -104,9 +117,7 @@ pub async fn get_les_for_ip(dbname: &str, count: &usize, ip: &str, nologs: &bool
         println!("{}", hostdata);
         println!("-----------------");
         if !*nologs {
-            for le in les.iter().take(*count) {
-                println!("{}", le);
-            }
+            les.display_some(count)?;
         }
         Ok(())
     } else {
