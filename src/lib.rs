@@ -94,7 +94,8 @@ pub async fn get_les_for_ip(dbname: &str, count: &usize, ip: &str, nologs: &bool
         let cursor = logentries_coll.find(filter).await?;
         let les: Vec<LogEntry> = cursor.try_collect().await?;
         println!(
-            "Showing {} logentries for db {} and ip {}",
+            "Showing {} of {} logentries for db {} and ip {}",
+            count,
             &les.len(),
             dbname,
             ip
