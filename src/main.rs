@@ -23,12 +23,18 @@ enum Command {
     },
     /// List hostdata and logentries associated with given ip address
     Logs {
-        #[clap(short, long, default_value = "test_loglook")]
         /// Name of database to read from
+        #[clap(short, long, default_value = "test_loglook")]
         dbname: String,
+
+        /// number of logentries to display
+        #[clap(short, long, default_value = "1")]
+        count: usize,
+
         /// ip to look up
         #[clap(short, long)]
         ip: String,
+
         /// suppress logentry output
         #[clap(short, long, default_value = "false", action = ArgAction::SetTrue)]
         nologs: bool,
@@ -67,7 +73,12 @@ async fn main() {
     // let mut cmd_result: Result<()>;
     let result = match &cli.command {
         Command::Ips { dbname } => ipfox::list_ips_in_hostdata(dbname).await,
-        Command::Logs { dbname, ip, nologs } => ipfox::get_les_for_ip(dbname, ip, nologs).await,
+        Command::Logs {
+            dbname,
+            count,
+            ip,
+            nologs,
+        } => ipfox::get_les_for_ip(dbname, count, ip, nologs).await,
         Command::All { dbname } => ipfox::output_hostdata_by_ip(dbname).await,
         Command::Counts { dbname } => ipfox::get_counts_by_ip(dbname).await,
         Command::Del { dbname, ips } => ipfox::delete_ips(dbname, ips).await,

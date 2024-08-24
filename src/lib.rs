@@ -11,7 +11,7 @@ pub(crate) mod hostdata;
 pub(crate) mod logentries;
 
 use hostdata::{Count, HostData};
-use logentries::{LogEntry, VecLogEntry};
+use logentries::LogEntry;
 
 /// Get database from dbname, return error if db doesn't exist
 async fn get_db(dbname: &str) -> Result<Database> {
@@ -85,7 +85,7 @@ pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
 }
 
 /// get all logentries for given ip
-pub async fn get_les_for_ip(dbname: &str, ip: &str, nologs: &bool) -> Result<()> {
+pub async fn get_les_for_ip(dbname: &str, count: &usize, ip: &str, nologs: &bool) -> Result<()> {
     let db = get_db(dbname).await?;
     let hostdata_coll = get_hostdata_coll(&db).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
@@ -99,13 +99,13 @@ pub async fn get_les_for_ip(dbname: &str, ip: &str, nologs: &bool) -> Result<()>
             dbname,
             ip
         );
-        let vles = VecLogEntry::from(les);
-        // let vles = logentries::VecLogEntry(les);
 
         println!("{}", hostdata);
         println!("-----------------");
         if !*nologs {
-            println!("{}", vles);
+            for le in les.iter().take(*count) {
+                println!("{}", le);
+            }
         }
         Ok(())
     } else {
