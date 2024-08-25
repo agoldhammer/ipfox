@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
+use console::style;
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::options::IndexOptions;
@@ -97,6 +98,11 @@ pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
     Ok(())
 }
 
+async fn output_les(les: &Vec<LogEntry>, count: &usize) -> Result<()> {
+    les.display_some(count)?;
+    Ok(())
+}
+
 /// get all logentries for given ip
 pub async fn get_les_for_ip(dbname: &str, count: &usize, ip: &str, nologs: &bool) -> Result<()> {
     let db = get_db(dbname).await?;
@@ -117,7 +123,8 @@ pub async fn get_les_for_ip(dbname: &str, count: &usize, ip: &str, nologs: &bool
         println!("{}", hostdata);
         println!("-----------------");
         if !*nologs {
-            les.display_some(count)?;
+            // les.display_some(count)?;
+            output_les(&les, count).await?;
         }
         Ok(())
     } else {
@@ -142,7 +149,16 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
     let mut cur = logentries_coll.aggregate(pipeline).await?;
     while let Some(doc) = cur.try_next().await? {
         let count: Count = bson::from_document(doc)?;
-        println!("{}: {}", count.ip, count.count);
+        let ip = count.ip.clone();
+        println!(
+            "IP: {}: Count: {}",
+            style(count.ip).green(),
+            style(count.count).magenta()
+        );
+        let le_cursor = logentries_coll.find(doc! {"ip": ip}).await?;
+        let les: Vec<LogEntry> = le_cursor.try_collect().await?;
+        let ndisp = usize::try_from(2).unwrap();
+        output_les(&les, &ndisp).await?;
     }
     Ok(())
 }
