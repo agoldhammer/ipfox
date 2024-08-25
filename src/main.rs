@@ -24,7 +24,7 @@ enum Command {
     /// List hostdata and logentries associated with given ip address
     Logs {
         /// Name of database to read from
-        #[clap(short, long, default_value = "test_loglook")]
+        #[clap(short, long, default_value = "loglook")]
         dbname: String,
 
         /// number of logentries to display
@@ -41,30 +41,25 @@ enum Command {
     },
     /// Output logentries for each ip in hostdata
     All {
-        #[clap(short, long, default_value = "test_loglook")]
+        #[clap(short, long, default_value = "loglook")]
         /// Name of database to read from
         dbname: String,
     },
     /// Output count of logentries for each ip in hostdata
     Counts {
-        #[clap(short, long, default_value = "test_loglook")]
+        #[clap(short, long, default_value = "loglook")]
         /// Name of database to read from
         dbname: String,
     },
     /// Delete ips and associated logentries
     Del {
-        #[clap(short, long, default_value = "test_loglook")]
+        #[clap(short, long, default_value = "loglook")]
         /// Name of database to read from
         dbname: String,
         /// ips to delete
         ips: Vec<String>,
     },
 }
-
-// fn cmdprint(slug: &str) -> Result<()> {
-//     println!("{}", slug);
-//     Ok(())
-// }
 
 #[tokio::main(worker_threads = 8)]
 async fn main() {
