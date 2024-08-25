@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use anyhow::Result;
-use futures::stream::{StreamExt, TryStreamExt};
+use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::options::IndexOptions;
 use mongodb::{Client, Collection, Database, IndexModel};
@@ -140,8 +140,8 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
     let sorter = doc! {"$sort": doc! {"nles": -1}};
     let pipeline = vec![grouper, sorter];
     let mut cur = logentries_coll.aggregate(pipeline).await?;
-    while let Some(doc) = cur.next().await {
-        let count: Count = bson::from_document(doc?)?;
+    while let Some(doc) = cur.try_next().await? {
+        let count: Count = bson::from_document(doc)?;
         println!("{}: {}", count.ip, count.count);
     }
     Ok(())
