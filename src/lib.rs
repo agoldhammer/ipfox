@@ -3,7 +3,7 @@ use anyhow::Result;
 use console::style;
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
-use mongodb::options::IndexOptions;
+use mongodb::options::{FindOptions, IndexOptions};
 use mongodb::{Client, Collection, Database, IndexModel};
 
 pub mod geo;
@@ -13,20 +13,6 @@ pub(crate) mod logentries;
 
 use hostdata::{Count, HostData};
 use logentries::LogEntry;
-
-trait DisplaySome {
-    fn display_some(&self, count: &u32) -> Result<()>;
-}
-
-impl DisplaySome for Vec<LogEntry> {
-    fn display_some(&self, count: &u32) -> Result<()> {
-        let n: usize = usize::try_from(*count).unwrap();
-        for le in self.iter().take(n) {
-            println!("{}", le);
-        }
-        Ok(())
-    }
-}
 
 /// Get database from dbname, return error if db doesn't exist
 async fn get_db(dbname: &str) -> Result<Database> {
@@ -99,33 +85,32 @@ pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
     Ok(())
 }
 
-async fn output_les(les: &Vec<LogEntry>, count: &u32) -> Result<()> {
-    les.display_some(count)?;
-    Ok(())
-}
-
 /// get all logentries for given ip
 pub async fn get_les_for_ip(dbname: &str, count: &u32, ip: &str, nologs: &bool) -> Result<()> {
     let db = get_db(dbname).await?;
     let hostdata_coll = get_hostdata_coll(&db).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
     let filter = doc! {"ip": ip};
+    let ndisp: i64 = i64::try_from(*count).unwrap();
+    let fo = FindOptions::builder().limit(ndisp).build();
     if let Some(hostdata) = hostdata_coll.find_one(filter.clone()).await? {
-        let cursor = logentries_coll.find(filter).await?;
+        let cursor = logentries_coll.find(filter).with_options(fo).await?;
         let les: Vec<LogEntry> = cursor.try_collect().await?;
         println!(
-            "Showing {} of {} logentries for db {} and ip {}",
-            count,
-            &les.len(),
-            dbname,
-            ip
+            "Showing first {} logentries for ip {} in db {} ",
+            les.len(),
+            ip,
+            dbname
         );
 
         println!("{}", hostdata);
         println!("-----------------");
         if !*nologs {
             // les.display_some(count)?;
-            output_les(&les, count).await?;
+            for le in les {
+                println!("{}", le);
+            }
+            // output_les(&les, count).await?;
         }
         Ok(())
     } else {
@@ -156,11 +141,17 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
             style(count.ip).green(),
             style(count.count).magenta()
         );
-        let le_cursor = logentries_coll.find(doc! {"ip": ip}).await?;
+        println!("-----------------\n");
+        // TODO: make limit a cmd line option
+        let fo = FindOptions::builder().limit(2).build();
+        let le_cursor = logentries_coll
+            .find(doc! {"ip": ip})
+            .with_options(fo)
+            .await?;
         let les: Vec<LogEntry> = le_cursor.try_collect().await?;
-        // TODO: allow count as an option
-        let ndisp = 2;
-        output_les(&les, &ndisp).await?;
+        for le in les {
+            println!("{}", le);
+        }
     }
     Ok(())
 }
