@@ -15,12 +15,13 @@ use hostdata::{Count, HostData};
 use logentries::LogEntry;
 
 trait DisplaySome {
-    fn display_some(&self, count: &usize) -> Result<()>;
+    fn display_some(&self, count: &u32) -> Result<()>;
 }
 
 impl DisplaySome for Vec<LogEntry> {
-    fn display_some(&self, count: &usize) -> Result<()> {
-        for le in self.iter().take(*count) {
+    fn display_some(&self, count: &u32) -> Result<()> {
+        let n: usize = usize::try_from(*count).unwrap();
+        for le in self.iter().take(n) {
             println!("{}", le);
         }
         Ok(())
@@ -98,13 +99,13 @@ pub async fn output_hostdata_by_ip(dbname: &str) -> Result<()> {
     Ok(())
 }
 
-async fn output_les(les: &Vec<LogEntry>, count: &usize) -> Result<()> {
+async fn output_les(les: &Vec<LogEntry>, count: &u32) -> Result<()> {
     les.display_some(count)?;
     Ok(())
 }
 
 /// get all logentries for given ip
-pub async fn get_les_for_ip(dbname: &str, count: &usize, ip: &str, nologs: &bool) -> Result<()> {
+pub async fn get_les_for_ip(dbname: &str, count: &u32, ip: &str, nologs: &bool) -> Result<()> {
     let db = get_db(dbname).await?;
     let hostdata_coll = get_hostdata_coll(&db).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
@@ -157,7 +158,8 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
         );
         let le_cursor = logentries_coll.find(doc! {"ip": ip}).await?;
         let les: Vec<LogEntry> = le_cursor.try_collect().await?;
-        let ndisp = usize::try_from(2).unwrap();
+        // TODO: allow count as an option
+        let ndisp = 2;
         output_les(&les, &ndisp).await?;
     }
     Ok(())

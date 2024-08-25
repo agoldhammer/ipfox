@@ -29,7 +29,7 @@ enum Command {
 
         /// number of logentries to display
         #[clap(short, long, default_value = "1")]
-        count: usize,
+        count: u32,
 
         /// ip to look up
         #[clap(short, long)]
