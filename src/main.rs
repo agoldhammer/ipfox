@@ -17,7 +17,7 @@ pub struct App {
 enum Command {
     /// List unique ips for database
     Ips {
-        #[clap(short, long, default_value = "test_loglook")]
+        #[clap(short, long, default_value = "loglook")]
         /// Name of database to read from
         dbname: String,
     },
