@@ -1,5 +1,4 @@
-use anyhow::anyhow;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use console::style;
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
