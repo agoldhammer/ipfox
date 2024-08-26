@@ -91,7 +91,7 @@ pub async fn get_les_for_ip(dbname: &str, count: &u32, ip: &str, nologs: &bool) 
     let hostdata_coll = get_hostdata_coll(&db).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
     let filter = doc! {"ip": ip};
-    let ndisp: i64 = i64::try_from(*count).unwrap();
+    let ndisp: i64 = i64::from(*count);
     let fo = FindOptions::builder().limit(ndisp).build();
     if let Some(hostdata) = hostdata_coll.find_one(filter.clone()).await? {
         let cursor = logentries_coll.find(filter).with_options(fo).await?;

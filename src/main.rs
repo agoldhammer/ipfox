@@ -1,6 +1,3 @@
-#![allow(unused_imports)]
-use anyhow::Result;
-use console;
 use std::process;
 
 use clap::{ArgAction, Parser, Subcommand};
@@ -65,7 +62,6 @@ enum Command {
 async fn main() {
     console::set_colors_enabled(true);
     let cli = App::parse();
-    // let mut cmd_result: Result<()>;
     let result = match &cli.command {
         Command::Ips { dbname } => ipfox::list_ips_in_hostdata(dbname).await,
         Command::Logs {
