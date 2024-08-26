@@ -121,6 +121,7 @@ pub async fn get_les_for_ip(dbname: &str, count: &u32, ip: &str, nologs: &bool) 
 pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
     let db = get_db(dbname).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
+    let hostdata_coll = get_hostdata_coll(&db).await?;
     let grouper = doc! {
         "$group": doc! {
             "_id": "$ip",
@@ -135,12 +136,13 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
     while let Some(doc) = cur.try_next().await? {
         let count: Count = bson::from_document(doc)?;
         let ip = count.ip.clone();
-        println!(
-            "IP: {}: Count: {}",
-            style(count.ip).green(),
-            style(count.count).magenta()
-        );
-        println!("-----------------\n");
+        let filter = doc! {"ip": count.ip};
+        if let Some(hostdata) = hostdata_coll.find_one(filter.clone()).await? {
+            println!("IP: {}Count {}", hostdata, style(count.count).magenta());
+            println!("-----------------\n");
+        } else {
+            println!("No hostdata found for ip {}", ip.clone());
+        }
         // TODO: make limit a cmd line option
         let fo = FindOptions::builder().limit(2).build();
         let le_cursor = logentries_coll
