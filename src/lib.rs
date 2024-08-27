@@ -30,7 +30,6 @@ async fn get_db(dbname: &str) -> Result<Database> {
 
 /// get hostdata collection
 async fn get_hostdata_coll(db: &Database) -> Result<Collection<HostData>> {
-    // let db = get_db(dbname).await?;
     let collection = db.collection("hostdata");
     let options = IndexOptions::builder().unique(true).build();
     let model = IndexModel::builder()
