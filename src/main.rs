@@ -56,6 +56,12 @@ enum Command {
         /// ips to delete
         ips: Vec<String>,
     },
+    /// Delete uptime probe logentries
+    Probes {
+        #[clap(short, long, default_value = "loglook")]
+        /// Name of database to read from
+        dbname: String,
+    },
 }
 
 #[tokio::main(worker_threads = 8)]
@@ -73,6 +79,7 @@ async fn main() {
         Command::All { dbname } => ipfox::output_hostdata_by_ip(dbname).await,
         Command::Counts { dbname } => ipfox::get_counts_by_ip(dbname).await,
         Command::Del { dbname, ips } => ipfox::delete_ips(dbname, ips).await,
+        Command::Probes { dbname } => ipfox::delete_probes(dbname).await,
     };
 
     match result {

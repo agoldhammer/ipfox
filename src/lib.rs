@@ -4,6 +4,7 @@ use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::options::{FindOptions, IndexOptions};
 use mongodb::{Client, Collection, Database, IndexModel};
+use std::collections::HashSet;
 
 pub mod geo;
 
@@ -138,7 +139,7 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
         let ip = count.ip.clone();
         let filter = doc! {"ip": count.ip};
         if let Some(hostdata) = hostdata_coll.find_one(filter.clone()).await? {
-            println!("IP: {}Count {}", hostdata, style(count.count).magenta());
+            println!("{}Count {}", hostdata, style(count.count).magenta());
             println!("-----------------\n");
         } else {
             println!("No hostdata found for ip {}", ip.clone());
@@ -167,6 +168,35 @@ pub async fn delete_ips(dbname: &str, ips: &Vec<String>) -> Result<()> {
         let filter = doc! {"ip": ip};
         hostdata_coll.delete_one(filter.clone()).await?;
         logentries_coll.delete_many(filter).await?;
+    }
+    Ok(())
+}
+
+/// delete uptime probe logentries
+pub async fn delete_probes(dbname: &str) -> Result<()> {
+    // set of unique ips with DigitalOcean Uptime Probe as user agent
+    let mut probe_ips = HashSet::new();
+    let db = get_db(dbname).await?;
+    let logentries_coll = get_logentries_coll(&db).await?;
+    let hostdata_coll = get_hostdata_coll(&db).await?;
+    let re = mongodb::bson::Regex {
+        pattern: "^DigitalOcean Uptime Probe .*".to_string(),
+        options: "i".to_string(),
+    };
+    let filter = doc! {"ua": re};
+    let le_cursor = logentries_coll.find(filter).await?;
+    let les: Vec<LogEntry> = le_cursor.try_collect().await?;
+    for le in les {
+        probe_ips.insert(le.ip);
+    }
+    for probe_ip in probe_ips {
+        println!("Deleting probes associated with ip {}", probe_ip);
+        let deleted_les = logentries_coll.delete_many(doc! {"ip": &probe_ip}).await?;
+        let deleted_hds = hostdata_coll.delete_one(doc! {"ip": &probe_ip}).await?;
+        println!(
+            "Deleted {} logentries and {} hostdata",
+            deleted_les.deleted_count, deleted_hds.deleted_count
+        );
     }
     Ok(())
 }
