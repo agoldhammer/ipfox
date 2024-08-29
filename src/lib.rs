@@ -8,8 +8,8 @@ use std::collections::HashSet;
 
 pub mod geo;
 
-pub(crate) mod hostdata;
-pub(crate) mod logentries;
+pub mod hostdata;
+pub mod logentries;
 
 use hostdata::{Count, HostData};
 use logentries::LogEntry;
