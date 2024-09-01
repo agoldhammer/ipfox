@@ -47,6 +47,9 @@ enum Command {
         #[clap(short, long, default_value = "loglook")]
         /// Name of database to read from
         dbname: String,
+        #[clap(short, long, default_value = "2")]
+        /// Maximum number of logentries to show for each ip
+        maxlogs: i64,
     },
     /// Delete ips and associated logentries
     Del {
@@ -77,7 +80,7 @@ async fn main() {
             nologs,
         } => ipfox::get_les_for_ip(dbname, count, ip, nologs).await,
         Command::All { dbname } => ipfox::output_hostdata_by_ip(dbname).await,
-        Command::Counts { dbname } => ipfox::get_counts_by_ip(dbname).await,
+        Command::Counts { dbname, maxlogs } => ipfox::get_counts_by_ip(dbname, maxlogs).await,
         Command::Del { dbname, ips } => ipfox::delete_ips(dbname, ips).await,
         Command::Probes { dbname } => ipfox::delete_probes(dbname).await,
     };

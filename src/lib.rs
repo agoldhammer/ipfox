@@ -118,7 +118,7 @@ pub async fn get_les_for_ip(dbname: &str, count: &u32, ip: &str, nologs: &bool) 
 }
 
 /// get count of logentries for each ip
-pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
+pub async fn get_counts_by_ip(dbname: &str, maxlogs: &i64) -> Result<()> {
     let db = get_db(dbname).await?;
     let logentries_coll = get_logentries_coll(&db).await?;
     let hostdata_coll = get_hostdata_coll(&db).await?;
@@ -144,7 +144,7 @@ pub async fn get_counts_by_ip(dbname: &str) -> Result<()> {
             println!("No hostdata found for ip {}", ip.clone());
         }
         // TODO: make limit a cmd line option
-        let fo = FindOptions::builder().limit(2).build();
+        let fo = FindOptions::builder().limit(*maxlogs).build();
         let le_cursor = logentries_coll
             .find(doc! {"ip": ip})
             .with_options(fo)
