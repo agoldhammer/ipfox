@@ -137,7 +137,7 @@ pub async fn get_counts_by_ip(dbname: &str, maxlogs: &i64) -> Result<()> {
         let count: Count = bson::from_document(doc)?;
         let ip = count.ip.clone();
         let filter = doc! {"ip": count.ip};
-        if let Some(hostdata) = hostdata_coll.find_one(filter.clone()).await? {
+        if let Some(hostdata) = hostdata_coll.find_one(filter).await? {
             println!("{}Count {}", hostdata, style(count.count).magenta());
             println!("-----------------\n");
         } else {
