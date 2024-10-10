@@ -143,7 +143,10 @@ pub async fn get_counts_by_ip(dbname: &str, maxlogs: &i64) -> Result<()> {
         } else {
             println!("No hostdata found for ip {}", ip.clone());
         }
-        let fo = FindOptions::builder().limit(*maxlogs).build();
+        let fo = FindOptions::builder()
+            .limit(*maxlogs)
+            .sort(doc! {"time": -1})
+            .build();
         let le_cursor = logentries_coll
             .find(doc! {"ip": ip})
             .with_options(fo)
